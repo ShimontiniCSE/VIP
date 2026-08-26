@@ -1,53 +1,43 @@
 import math
+import random
 
-def bilinear_interpolation(image, new_width, new_height):
-height = len(image)
-width = len(image[0])
+random.seed(42)
 
-result = [[0 for _ in range(new_width)] for _ in range(new_height)]
+points = []
 
-x_ratio = (width - 1) / (new_width - 1) if new_width > 1 else 0
-y_ratio = (height - 1) / (new_height - 1) if new_height > 1 else 0
+for i in range(20):
+    x = random.uniform(0, 10)
+    y = random.uniform(0, 10)
+    z = math.sin(x) * math.cos(y) + 0.1 * x
+    points.append((x, y, z))
 
-for y in range(new_height):
-for x in range(new_width):
-src_x = x * x_ratio
-src_y = y * y_ratio
+def idw(x, y, points, power=2):
+    numerator = 0.0
+    denominator = 0.0
 
-x1 = int(math.floor(src_x))
-y1 = int(math.floor(src_y))
-x2 = min(x1 + 1, width - 1)
-y2 = min(y1 + 1, height - 1)
+    for px, py, pz in points:
+        distance = math.sqrt((x - px) ** 2 + (y - py) ** 2)
 
-dx = src_x - x1
-dy = src_y - y1
+        if distance == 0:
+            return pz
 
-value = (
-image[y1][x1] * (1 - dx) * (1 - dy)
-+ image[y1][x2] * dx * (1 - dy)
-+ image[y2][x1] * (1 - dx) * dy
-+ image[y2][x2] * dx * dy
-)
+        weight = 1.0 / (distance ** power)
+        numerator += weight * pz
+        denominator += weight
 
-result[y][x] = round(value)
+    return numerator / denominator
 
-return result
+grid_size = 10
 
-image = [
-[10, 20, 30],
-[40, 50, 60],
-[70, 80, 90]
-]
+print("Spatial Interpolation using IDW")
+print()
 
-new_width = 6
-new_height = 6
+for y in range(grid_size + 1):
+    row = []
 
-result = bilinear_interpolation(image, new_width, new_height)
+    for x in range(grid_size + 1):
+        value = idw(x, y, points)
+        row.append(f"{value:.3f}")
 
-print("Original Image:")
-for row in image:
-print(row)
+    print(" ".join(row))
 
-print("\nInterpolated Image:")
-for row in result:
-print(row)
